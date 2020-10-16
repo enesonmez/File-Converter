@@ -14,12 +14,14 @@ import docx2pdf
 import pptx2pdf
 import txt2pdf
 
-#Değişken ismi döndüren fonksiyon
+"""Project General Function--------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------"""
+#Function returning variable name
 def retrieve_name(var):
     callers_local_vars = inspect.currentframe().f_back.f_locals.items()
     return [var_name for var_name, var_val in callers_local_vars if var_val is var]
 
-#Liste elemanlarını string hale getirme
+#Converting list elements to strings
 def listItemAdd(array):
     value = ''
     for arr in array:
@@ -27,107 +29,17 @@ def listItemAdd(array):
     return value
 
 
-class App(QMainWindow):
+"""StackedLayoutLayer Class---------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------"""
+class StackedLayoutLayer(QWidget):
     def __init__(self):
-        super(App,self).__init__()
+        super(StackedLayoutLayer,self).__init__()
         self.files = []
-        self.title = "File Converter"
-        self.icon = 'img/icon.png'
-        self.left = 500
-        self.top = 200
-        self.width = 640
-        self.height = 480
-        self.initUI()
-
-        self.show()
-
-#---App UI--------------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left,self.top,self.width,self.height)#setting position and size what window
-        self.setMaximumSize(self.width,self.height)
-        self.setMinimumSize(self.width,self.height)
-        self.setWindowIcon(QIcon(self.icon))
-
-        #Layout
-        self.pagelayout = QVBoxLayout()
-        self.menulayout = QHBoxLayout()
-        self.statuslayout = QHBoxLayout()
-        self.layout = QStackedLayout()
-
-        self.pagelayout.addLayout(self.menulayout)
-        self.pagelayout.addLayout(self.layout)
-        self.pagelayout.addLayout(self.statuslayout)
-
-        #MenubarUI
-        self.menubarUI()
-
-        #StatusbarUI
-        self.statusbarUI('No Process')
-
-        #MainpageUI    
-        self.setMainStackedLayout(self.layout)
-
-        widget = QWidget()
-        widget.setLayout(self.pagelayout)
-        self.setCentralWidget(widget)
-
-#---MenuBar UI----------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------
-    def menubarUI(self):
-        #Menubar
-        self.mainmenu = self.menuBar()
-        self.mainmenu.setFont(QFont('Times',12))
-        #File
-        file = self.mainmenu.addMenu('File')
-        file.setFont(QFont('Times',11))
-        #Action Add (Main PAGE)
-        mainpage = QAction('Main Page',self)
-        mainpage.triggered.connect(self.mainPageLinkPress)
-        file.addAction(mainpage)
-        #Action Add (Exit)
-        exitlink = QAction('Exit',self)
-        exitlink.setShortcut('Ctrl+Q')
-        exitlink.triggered.connect(self.close)
-        file.addAction(exitlink)
-
-        #PDF
-        pdf = self.mainmenu.addMenu('PDF')
-        pdf.setFont(QFont('Times',11))
-        #Action Add (DOCX to PDF)
-        docx2pdf = QAction(QIcon('img/doc2pdf.png'),'DOCX to PDF',self)
-        docx2pdf.triggered.connect(self.docx2pdfLinkPress)
-        pdf.addAction(docx2pdf)
-        #Action Add (PPTX to PDF)
-        pptx2pdf = QAction(QIcon('img/ppt2pdf.png'),'PPTX to PDF',self)
-        pptx2pdf.triggered.connect(self.pptx2pdfLinkPress)
-        pdf.addAction(pptx2pdf)
-        #Action Add (PPTX to PDF)
-        txt2pdf = QAction(QIcon('img/ppt2pdf.png'),'TXT to PDF',self)
-        txt2pdf.triggered.connect(self.txt2pdfLinkPress)
-        pdf.addAction(txt2pdf)
-
-
-        self.menulayout.addWidget(self.mainmenu)
-
-#---StatusBar UI--------------------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------
-    def statusbarUI(self,notification):
-        self.notificationlabel = QLabel('Process State : ' + notification,self)
-        self.notificationlabel.setFont(QFont('Times',10))
-        self.statuslayout.addWidget(self.notificationlabel)
-
-        self.progressBar = QProgressBar()
-        self.progressBar.setVisible(False)
-        self.statuslayout.addWidget(self.progressBar)        
-    
-    def setLabelText(self,labelWidget,notification):
-        labelWidget.setText('Process State : ' + notification)
 
 #---Create Layers of StackedLayout--------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
-    def setMainStackedLayout(self, layout):
+    def setMainStackedLayout(self, layout, progressBar):
+        self.progressBar = progressBar
         mainpage = self.mainpageUI()
         convertpage = self.convertPageUI('')
 
@@ -189,7 +101,6 @@ class App(QMainWindow):
         butonCreate = QPushButton('Convert',self)
         butonCreate.setFont(QFont('Times',11))
         butonCreate.setStyleSheet("background-color:red")
-
         
         butonCreate.clicked.connect(self.convertSwitch)
         grid.addWidget(butonCreate,3,0,1,7)
@@ -197,31 +108,6 @@ class App(QMainWindow):
         widget.setLayout(grid)
         return widget
 
-#---StackedLayout Layer Switch------------------------------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------------------------------------------------------  
-    def mainPageLinkPress(self):
-        self.layout.setCurrentIndex(0)
-        self.setLabelText(self.notificationlabel,'No Process')
-        self.progressBar.setVisible(False)
-
-    def docx2pdfLinkPress(self):
-        self.stackPageUIWidgetSettigs(1,'DOCX to PDF')
-
-    def pptx2pdfLinkPress(self):
-        self.stackPageUIWidgetSettigs(1,'PPTX to PDF')
-    
-    def txt2pdfLinkPress(self):
-        self.stackPageUIWidgetSettigs(1,'TXT to PDF')
-    
-    def stackPageUIWidgetSettigs(self,id,text):
-        self.layout.setCurrentIndex(id)
-        self.label.setText(text)
-        self.files.clear()
-        self.reviewEdit.setText('')
-        self.setLabelText(self.notificationlabel,'')
-        self.progressBar.setVisible(True)
-
-        
 #---Convert Process-----------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------        
     def convertSwitch(self):
@@ -299,6 +185,131 @@ class App(QMainWindow):
                 self.files.append(fileName)
                 self.reviewEdit.setText(listItemAdd(self.files))
 
+
+"""App Class------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------"""
+class App(QMainWindow,StackedLayoutLayer):
+    def __init__(self):
+        super(App,self).__init__()
+        self.files = []
+        self.title = "File Converter"
+        self.icon = 'img/icon.png'
+        self.left = 500
+        self.top = 200
+        self.width = 640
+        self.height = 480
+        self.initUI()
+
+        self.show()
+
+#---App UI--------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------
+    def initUI(self):
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left,self.top,self.width,self.height)#setting position and size what window
+        self.setMaximumSize(self.width,self.height)
+        self.setMinimumSize(self.width,self.height)
+        self.setWindowIcon(QIcon(self.icon))
+
+        #Layout
+        self.pagelayout = QVBoxLayout()
+        self.menulayout = QHBoxLayout()
+        self.statuslayout = QHBoxLayout()
+        self.layout = QStackedLayout()
+
+        self.pagelayout.addLayout(self.menulayout)
+        self.pagelayout.addLayout(self.layout)
+        self.pagelayout.addLayout(self.statuslayout)
+
+        #MenubarUI
+        self.menubarUI()
+
+        #StatusbarUI
+        self.statusbarUI('No Process')
+
+        #MainpageUI    
+        self.setMainStackedLayout(self.layout,self.progressBar)
+
+        widget = QWidget()
+        widget.setLayout(self.pagelayout)
+        self.setCentralWidget(widget)
+
+#---MenuBar UI----------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------
+    def menubarUI(self):
+        #Menubar
+        self.mainmenu = self.menuBar()
+        self.mainmenu.setFont(QFont('Times',12))
+        #File
+        file = self.mainmenu.addMenu('File')
+        file.setFont(QFont('Times',11))
+        #Action Add (Main PAGE)
+        mainpage = QAction('Main Page',self)
+        mainpage.triggered.connect(self.mainPageLinkPress)
+        file.addAction(mainpage)
+        #Action Add (Exit)
+        exitlink = QAction('Exit',self)
+        exitlink.setShortcut('Ctrl+Q')
+        exitlink.triggered.connect(self.close)
+        file.addAction(exitlink)
+
+        #PDF
+        pdf = self.mainmenu.addMenu('PDF')
+        pdf.setFont(QFont('Times',11))
+        #Action Add (DOCX to PDF)
+        docx2pdf = QAction(QIcon('img/doc2pdf.png'),'DOCX to PDF',self)
+        docx2pdf.triggered.connect(self.docx2pdfLinkPress)
+        pdf.addAction(docx2pdf)
+        #Action Add (PPTX to PDF)
+        pptx2pdf = QAction(QIcon('img/ppt2pdf.png'),'PPTX to PDF',self)
+        pptx2pdf.triggered.connect(self.pptx2pdfLinkPress)
+        pdf.addAction(pptx2pdf)
+        #Action Add (PPTX to PDF)
+        txt2pdf = QAction(QIcon('img/ppt2pdf.png'),'TXT to PDF',self)
+        txt2pdf.triggered.connect(self.txt2pdfLinkPress)
+        pdf.addAction(txt2pdf)
+
+
+        self.menulayout.addWidget(self.mainmenu)
+
+#---StatusBar UI--------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------
+    def statusbarUI(self,notification):
+        self.notificationlabel = QLabel('Process State : ' + notification,self)
+        self.notificationlabel.setFont(QFont('Times',10))
+        self.statuslayout.addWidget(self.notificationlabel)
+
+        self.progressBar = QProgressBar()
+        self.progressBar.setVisible(False)
+        self.statuslayout.addWidget(self.progressBar)        
+    
+    def setLabelText(self,labelWidget,notification):
+        labelWidget.setText('Process State : ' + notification)
+
+
+#---StackedLayout Layer Switch------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------  
+    def mainPageLinkPress(self):
+        self.layout.setCurrentIndex(0)
+        self.setLabelText(self.notificationlabel,'No Process')
+        self.progressBar.setVisible(False)
+
+    def docx2pdfLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'DOCX to PDF')
+
+    def pptx2pdfLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'PPTX to PDF')
+    
+    def txt2pdfLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'TXT to PDF')
+    
+    def stackPageUIWidgetSettigs(self,id,text):
+        self.layout.setCurrentIndex(id)
+        self.label.setText(text)
+        self.files.clear()
+        self.reviewEdit.setText('')
+        self.setLabelText(self.notificationlabel,'')
+        self.progressBar.setVisible(True)
 
 
 
