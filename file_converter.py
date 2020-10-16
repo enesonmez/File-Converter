@@ -1,3 +1,8 @@
+"""
+    Date   : 
+    Author : Enes Sönmez
+"""
+
 import sys
 import os
 from PyQt5.QtWidgets import *
@@ -7,6 +12,7 @@ import inspect
 import time
 import docx2pdf
 import pptx2pdf
+import txt2pdf
 
 #Değişken ismi döndüren fonksiyon
 def retrieve_name(var):
@@ -35,11 +41,11 @@ class App(QMainWindow):
 
         self.show()
 
-#---Uygulama Arayüzü----------------------------------------------------------------------------------------------------------------
+#---App UI--------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
     def initUI(self):
         self.setWindowTitle(self.title)
-        self.setGeometry(self.left,self.top,self.width,self.height)#pencerenin konumunu ve boyutunu ayarlar.
+        self.setGeometry(self.left,self.top,self.width,self.height)#setting position and size what window
         self.setMaximumSize(self.width,self.height)
         self.setMinimumSize(self.width,self.height)
         self.setWindowIcon(QIcon(self.icon))
@@ -67,7 +73,7 @@ class App(QMainWindow):
         widget.setLayout(self.pagelayout)
         self.setCentralWidget(widget)
 
-#---MenuBar Arayüzü-----------------------------------------------------------------------------------------------------------------
+#---MenuBar UI----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
     def menubarUI(self):
         #Menubar
@@ -89,19 +95,23 @@ class App(QMainWindow):
         #PDF
         pdf = self.mainmenu.addMenu('PDF')
         pdf.setFont(QFont('Times',11))
-        #Action Add (Docx to PDF)
-        docx2pdf = QAction(QIcon('img/doc2pdf.png'),'Docx to PDF',self)
+        #Action Add (DOCX to PDF)
+        docx2pdf = QAction(QIcon('img/doc2pdf.png'),'DOCX to PDF',self)
         docx2pdf.triggered.connect(self.docx2pdfLinkPress)
         pdf.addAction(docx2pdf)
         #Action Add (PPTX to PDF)
         pptx2pdf = QAction(QIcon('img/ppt2pdf.png'),'PPTX to PDF',self)
-        #pptx2pdf.triggered.connect(self.pptx2pdfLinkPress)
+        pptx2pdf.triggered.connect(self.pptx2pdfLinkPress)
         pdf.addAction(pptx2pdf)
+        #Action Add (PPTX to PDF)
+        txt2pdf = QAction(QIcon('img/ppt2pdf.png'),'TXT to PDF',self)
+        txt2pdf.triggered.connect(self.txt2pdfLinkPress)
+        pdf.addAction(txt2pdf)
 
 
         self.menulayout.addWidget(self.mainmenu)
 
-#---StatusBar Arayüzü---------------------------------------------------------------------------------------------------------------
+#---StatusBar UI--------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
     def statusbarUI(self,notification):
         self.notificationlabel = QLabel('Process State : ' + notification,self)
@@ -115,7 +125,7 @@ class App(QMainWindow):
     def setLabelText(self,labelWidget,notification):
         labelWidget.setText('Process State : ' + notification)
 
-#---Stacked Layout Katmanlarını Oluşturma-------------------------------------------------------------------------------------------
+#---Create Layers of StackedLayout--------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
     def setMainStackedLayout(self, layout):
         mainpage = self.mainpageUI()
@@ -124,22 +134,22 @@ class App(QMainWindow):
         layout.addWidget(mainpage)
         layout.addWidget(convertpage)
 
-#---Stacked Layout Ana Sayfa Arayüzü------------------------------------------------------------------------------------------------
+#---StackedLayout Main Page UI Layer------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
     def mainpageUI(self):
-        pdf = ['Docx to PDF', 'PPTX to PDF', 'PDF Merge']
-        docx = ['PDF to Docx', 'PPTX to Docx']
+        pdf = ['DOCX to PDF', 'PPTX to PDF', 'TXT to PDF', 'HTML to PDF','PDF Merge']
+        docx = ['PDF to DOCX', 'PPTX to DOCX']
         pptx = ['PDF to PPTX']
         files = [pdf,docx,pptx]
-        color = ['red','blue','orange']
+        color = ['red','#3f9fdb','orange']
         widget = QWidget()
         grid = QGridLayout()
         
         for y, file in enumerate(zip(files,color)):
-            #file[0] =>listeler  file[1] => renkler
+            #file[0] =>lists  file[1] => colors
             variable = str(retrieve_name(file[0])[0]).upper()
             label = QLabel(variable,self)
-            label.setAlignment(Qt.AlignTop)
+            label.setAlignment(Qt.AlignCenter)
             label.setFont(QFont('Times',11))
             label.setStyleSheet("background-color: " + file[1])
             grid.addWidget(label,0,y)
@@ -152,7 +162,7 @@ class App(QMainWindow):
         widget.setLayout(grid)
         return widget
 
-#---Stacked Layout Dönüştürme Arayüzü----------------------------------------------------------------------------------------------- 
+#---StackedLayout Convert UI Layer-------------------------------------------------------------------------------------------------- 
 #-----------------------------------------------------------------------------------------------------------------------------------
     def convertPageUI(self,title):
         widget = QWidget()
@@ -167,7 +177,7 @@ class App(QMainWindow):
         self.reviewEdit.setEnabled(False)
         grid.addWidget(self.reviewEdit,1,0,1,7)
 
-        label2 = QLabel('Choose file',self)
+        label2 = QLabel('Choose file :',self)
         label2.setFont(QFont('Times',11))
         grid.addWidget(label2,2,0)
 
@@ -187,7 +197,7 @@ class App(QMainWindow):
         widget.setLayout(grid)
         return widget
 
-#---Stacked Layout Geçişleri--------------------------------------------------------------------------------------------------------
+#---StackedLayout Layer Switch------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------  
     def mainPageLinkPress(self):
         self.layout.setCurrentIndex(0)
@@ -195,47 +205,87 @@ class App(QMainWindow):
         self.progressBar.setVisible(False)
 
     def docx2pdfLinkPress(self):
-        self.layout.setCurrentIndex(1)
-        self.label.setText('Docx to PDF')
+        self.stackPageUIWidgetSettigs(1,'DOCX to PDF')
+
+    def pptx2pdfLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'PPTX to PDF')
+    
+    def txt2pdfLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'TXT to PDF')
+    
+    def stackPageUIWidgetSettigs(self,id,text):
+        self.layout.setCurrentIndex(id)
+        self.label.setText(text)
         self.files.clear()
         self.reviewEdit.setText('')
         self.setLabelText(self.notificationlabel,'')
         self.progressBar.setVisible(True)
+
         
-#---Convert İşlemleri---------------------------------------------------------------------------------------------------------------
+#---Convert Process-----------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------        
     def convertSwitch(self):
         processName = self.label.text().lower()
         if processName == 'docx to pdf':
             self.docx2pdf()
+        elif processName == 'pptx to pdf':
+            self.pptx2pdf()
+        elif processName == 'txt to pdf':
+            self.txt2pdf()
         else:
             print(processName)
     
     def docx2pdf(self):
         if self.files:
             for file in self.files:
-                file_in = file
-                path, filename = os.path.split(file)
-                file_out = path + '/' + os.path.splitext(filename)[0] + '.pdf'
-                #print(file_in,file_out)
+                file_in, file_out = self.filenameFix(file,'.pdf')
                 self.progressBar.setValue(0)
                 docx2pdf.docx2pdf(file_in,file_out)
                 self.progressBar.setValue(100)
-            self.files.clear()
-            self.reviewEdit.setText('')
-            time.sleep(2)
-            self.progressBar.reset()
-                
-        
+            self.convertPageUIWidgetReset()
+    
+    def pptx2pdf(self):
+        if self.files:
+            for file in self.files:
+                file_in, file_out = self.filenameFix(file,'.pdf')
+                self.progressBar.setValue(0)
+                pptx2pdf.PPTXtoPDF(file_in,file_out)
+                self.progressBar.setValue(100)
+            self.convertPageUIWidgetReset()
+
+    def txt2pdf(self):
+        if self.files:
+            for file in self.files:
+                file_in, file_out = self.filenameFix(file,'.pdf')
+                self.progressBar.setValue(0)
+                txt2pdf.TXTtoPDF(file_in,file_out)
+                self.progressBar.setValue(100)
+            self.convertPageUIWidgetReset()
+    
+    def filenameFix(self,file,filetype):
+        file_in = file
+        path, filename = os.path.split(file)
+        file_out = path + '/' + os.path.splitext(filename)[0] + filetype
+        return file_in, file_out
+
+    def convertPageUIWidgetReset(self):
+        self.files.clear()
+        self.reviewEdit.setText('')
+        time.sleep(2)
+        self.progressBar.reset() 
         
 
-#---Open File Name Fonksiyonları----------------------------------------------------------------------------------------------------
+#---Open File Name Functions--------------------------------------------------------------------------------------------------------
 #----------------------------------------------------------------------------------------------------------------------------------- 
     def openFileName(self):
         if self.label.text():
             fileType = self.label.text().split()[0].lower()
             if fileType == 'docx':
-                self.openFileNameDialog(fileType.title() + ' Files (*.' + fileType + ' *.doc)')
+                self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ' *.doc)')
+            elif fileType == 'pptx':
+                self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ' *.ppt)')
+            elif fileType == 'txt':
+                self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ')')
 
     def openFileNameDialog(self,filetype):
         options = QFileDialog.Options()
