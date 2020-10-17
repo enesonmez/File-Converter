@@ -1,11 +1,13 @@
-"""
-    Date   : 
-    Author : Enes Sönmez
-"""
+# -*- coding: utf-8 -*-
+#-----------------------------------------------------------------------------------------------------------------------------------
+#   Date   : 
+#   Author : Enes Sönmez
+#-----------------------------------------------------------------------------------------------------------------------------------
 
 import sys
 import os
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import (QApplication ,QWidget, QMainWindow, QLabel, QPushButton, QProgressBar, QMenuBar, QAction,
+                            QTextEdit, QFileDialog, QStackedLayout, QGridLayout, QHBoxLayout, QVBoxLayout)
 from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
 from PyQt5.QtCore import Qt 
 import inspect
@@ -84,6 +86,13 @@ class StackedLayoutLayer(QWidget):
         self.label.setFont(QFont('Times',11))
         grid.addWidget(self.label,0,0)
 
+        clearbuton = QPushButton('Clear',self)
+        clearbuton.setFont(QFont('Times',11))
+        clearbuton.setStyleSheet("background-color:green")
+        clearbuton.clicked.connect(self.reviewEditClear)
+        grid.addWidget(clearbuton,0,6)
+
+
         self.reviewEdit = QTextEdit()
         self.reviewEdit.setFont(QFont('Times',11))
         self.reviewEdit.setEnabled(False)
@@ -107,6 +116,12 @@ class StackedLayoutLayer(QWidget):
 
         widget.setLayout(grid)
         return widget
+
+#---ReviewEdit Tetxbox Clear-----------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------  
+    def reviewEditClear(self):
+        self.files.clear()
+        self.reviewEdit.setText('')
 
 #---Convert Process-----------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------        
@@ -155,8 +170,7 @@ class StackedLayoutLayer(QWidget):
         return file_in, file_out
 
     def convertPageUIWidgetReset(self):
-        self.files.clear()
-        self.reviewEdit.setText('')
+        self.reviewEditClear()
         time.sleep(2)
         self.progressBar.reset() 
         
@@ -306,8 +320,7 @@ class App(QMainWindow,StackedLayoutLayer):
     def stackPageUIWidgetSettigs(self,id,text):
         self.layout.setCurrentIndex(id)
         self.label.setText(text)
-        self.files.clear()
-        self.reviewEdit.setText('')
+        self.reviewEditClear()
         self.setLabelText(self.notificationlabel,'')
         self.progressBar.setVisible(True)
 
