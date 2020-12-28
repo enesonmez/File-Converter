@@ -12,9 +12,7 @@ from PyQt5.QtGui import QIcon, QFont, QPalette, QColor
 from PyQt5.QtCore import Qt 
 import inspect
 import time
-import docx2pdf
-import pptx2pdf
-import txt2pdf
+import docx2pdf, pptx2pdf, txt2pdf, xlsx2pdf, pdfmerge
 
 """Project General Function--------------------------------------------------------------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------------------"""
@@ -51,7 +49,7 @@ class StackedLayoutLayer(QWidget):
 #---StackedLayout Main Page UI Layer------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------
     def mainpageUI(self):
-        pdf = ['DOCX to PDF', 'PPTX to PDF', 'TXT to PDF', 'HTML to PDF','PDF Merge']
+        pdf = ['DOCX to PDF', 'PPTX to PDF', 'TXT to PDF', 'XLSX to PDF','PDF Merge']
         docx = ['PDF to DOCX', 'PPTX to DOCX']
         pptx = ['PDF to PPTX']
         files = [pdf,docx,pptx]
@@ -133,6 +131,10 @@ class StackedLayoutLayer(QWidget):
             self.pptx2pdf()
         elif processName == 'txt to pdf':
             self.txt2pdf()
+        elif processName == 'xlsx to pdf':
+            self.xlsx2pdf()
+        elif processName == 'pdf merge':
+            self.pdfmerge()
         else:
             print(processName)
     
@@ -163,10 +165,27 @@ class StackedLayoutLayer(QWidget):
                 self.progressBar.setValue(100)
             self.convertPageUIWidgetReset()
     
-    def filenameFix(self,file,filetype):
+    def xlsx2pdf(self):
+        if self.files:
+            for file in self.files:
+                file_in, file_out = self.filenameFix(file,'.pdf')
+                self.progressBar.setValue(0)
+                xlsx2pdf.xlsx2pdf(file_in,file_out)
+                self.progressBar.setValue(100)
+            self.convertPageUIWidgetReset()
+    
+    def pdfmerge(self):
+        if self.files:
+            _, file_out = self.filenameFix(self.files[0],'.pdf',"merge")
+            self.progressBar.setValue(0)
+            pdfmerge.merge_pdf(self.files,file_out)
+            self.progressBar.setValue(100)
+            self.convertPageUIWidgetReset()
+    
+    def filenameFix(self,file,filetype,info=None):
         file_in = file
         path, filename = os.path.split(file)
-        file_out = path + '/' + os.path.splitext(filename)[0] + filetype
+        file_out = path + '/' + os.path.splitext(filename)[0] + filetype if info == None else path + '/' + info + filetype
         return file_in, file_out
 
     def convertPageUIWidgetReset(self):
@@ -184,7 +203,11 @@ class StackedLayoutLayer(QWidget):
                 self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ' *.doc)')
             elif fileType == 'pptx':
                 self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ' *.ppt)')
+            elif fileType == 'xlsx':
+                self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ' *.xls)')
             elif fileType == 'txt':
+                self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ')')
+            elif fileType == 'pdf':
                 self.openFileNameDialog(fileType.upper() + ' Files (*.' + fileType + ')')
 
     def openFileNameDialog(self,filetype):
@@ -278,10 +301,18 @@ class App(QMainWindow,StackedLayoutLayer):
         pptx2pdf = QAction(QIcon('img/ppt2pdf.png'),'PPTX to PDF',self)
         pptx2pdf.triggered.connect(self.pptx2pdfLinkPress)
         pdf.addAction(pptx2pdf)
-        #Action Add (PPTX to PDF)
-        txt2pdf = QAction(QIcon('img/ppt2pdf.png'),'TXT to PDF',self)
+        #Action Add (TXT to PDF)
+        txt2pdf = QAction(QIcon('img/txt2pdf.png'),'TXT to PDF',self)
         txt2pdf.triggered.connect(self.txt2pdfLinkPress)
         pdf.addAction(txt2pdf)
+        #Action Add (XLSX to PDF)
+        xls2pdf = QAction(QIcon('img/xls2pdf.png'),'XLSX to PDF',self)
+        xls2pdf.triggered.connect(self.xlsx2pdfLinkPress)
+        pdf.addAction(xls2pdf)
+        #Action Add (PDF Merge)
+        pdfmerge = QAction(QIcon('img/pdfmerge.png'),'PDF Merge',self)
+        pdfmerge.triggered.connect(self.pdfmergeLinkPress)
+        pdf.addAction(pdfmerge)
 
 
         self.menulayout.addWidget(self.mainmenu)
@@ -316,6 +347,12 @@ class App(QMainWindow,StackedLayoutLayer):
     
     def txt2pdfLinkPress(self):
         self.stackPageUIWidgetSettigs(1,'TXT to PDF')
+
+    def xlsx2pdfLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'XLSX to PDF')
+
+    def pdfmergeLinkPress(self):
+        self.stackPageUIWidgetSettigs(1,'PDF Merge')
     
     def stackPageUIWidgetSettigs(self,id,text):
         self.layout.setCurrentIndex(id)
